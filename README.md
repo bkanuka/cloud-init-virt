@@ -3,14 +3,17 @@
 ## How-to:
 
   1. Clone this repository:
+
   ```bash
   git clone https://github.com/bkanuka/cloud-init-virt.git
   ```
   1. Go to http://cloud-images.ubuntu.com/trusty/current/ and download the image of choice. Most likely this can be accomplished using:
+
   ```bash
   wget http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
   ```
   1. Copy `config.sample` to `config`:
+
   ```bash
   cp config.sample config
   ```

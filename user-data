@@ -1,0 +1,21 @@
+#cloud-config
+# vim: syntax=yaml
+#
+
+users:
+  - default
+  - name: bkanuka
+    gecos: Bennett Kanuka
+    groups: users
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    ssh-import-id: None
+    lock-passwd: false
+    passwd: $6$rounds=4096$BdWC01oVld$tiiBxFAMTQ2dCo0ty.cUJcTfdALp0dX1VuE0ig4iTIORYY2DMdNwdVI9OEAsWm3NhoqQAGSkzyyRBdMxdILcd/
+    groups: [adm, audio, cdrom, dialout, floppy, video, plugdev, dip, netdev, sudo]
+
+# upgrade packages on startup
+package_upgrade: true
+
+# `poweroff` or `reboot` after install
+power_state:
+  mode: reboot

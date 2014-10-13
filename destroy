@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+CONFIG=config
+
+if [ -f "$CONFIG" ]; then
+    . "$CONFIG"
+else
+    echo "No config file found."
+    exit 1
+fi
+
+
+INSTANCE_ID=v01
+
+if [ -z "${POOL_NAME}" ]; then 
+    POOL_NAME=default
+fi
+if [ -z "${POOL_PATH}" ]; then
+    POOL_PATH=$( virsh pool-dumpxml default | xmllint --xpath '//target/path/text()' - | head -n 1 )
+fi
+
+
+virsh destroy "$HOSTNAME"
+virsh undefine "$HOSTNAME" \
+    --remove-all-storage \
+    --managed-save \
+    --snapshots-metadata
+
+virsh pool-refresh "$POOL_NAME"

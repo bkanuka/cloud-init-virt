@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+CONFIG=config
+
+if [ -f "$CONFIG" ]; then
+    . "$CONFIG"
+else
+    echo "No config file found."
+    exit 1
+fi
+
+
+INSTANCE_ID=v01
+
+if [ -z "${POOL_NAME}" ]; then 
+    POOL_NAME=default
+fi
+if [ -z "${POOL_PATH}" ]; then
+    POOL_PATH=$( virsh pool-dumpxml $POOL_NAME | xmllint --xpath '//target/path/text()' - | head -n 1 )
+fi
+if [ -z "${RAM}" ]; then 
+    RAM=1024
+fi
+if [ -z "${VCPUS}" ]; then 
+    VCPUS=1
+fi
+
+#wget http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
+
+cat <<EOF > meta-data
+instance-id: ${HOSTNAME}-${INSTANCE_ID}
+hostname: $HOSTNAME
+EOF
+
+genisoimage -output "${HOSTNAME}-config.iso" -volid cidata -joliet -rock user-data meta-data
+
+sudo cp "$BASE_IMG" "${POOL_PATH%%/}/${HOSTNAME}.img"
+sudo cp ${HOSTNAME}-config.iso "$POOL_PATH"
+virsh pool-refresh "$POOL_NAME"
+rm ${HOSTNAME}-config.iso
+rm meta-data
+
+echo Installing:
+echo "Hostname:  $HOSTNAME"
+echo "Pool Name: $POOL_NAME"
+echo "Pool Path: $POOL_PATH"
+
+virt-install \
+    --name $HOSTNAME \
+    --ram $RAM \
+    --vcpus $VCPUS \
+    --cpu host \
+    --autostart \
+    --memballoon virtio \
+    --network bridge=br0,model=virtio \
+    --boot hd \
+    --disk vol=${POOL_NAME}/${HOSTNAME}.img,format=qcow2,bus=virtio,cache=writeback \
+    --disk vol=${POOL_NAME}/${HOSTNAME}-config.iso,bus=virtio

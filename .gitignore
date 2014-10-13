@@ -1,2 +1,4 @@
 *.img
 config
+user-data*
+!user-data.sample

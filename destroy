@@ -20,8 +20,8 @@ if [ -z "${POOL_PATH}" ]; then
 fi
 
 
-virsh destroy "$HOSTNAME"
-virsh undefine "$HOSTNAME" \
+virsh destroy "$1"
+virsh undefine "$1" \
     --remove-all-storage \
     --managed-save \
     --snapshots-metadata

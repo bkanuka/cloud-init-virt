@@ -12,6 +12,13 @@ fi
 
 INSTANCE_ID=v01
 
+if [ -z "${1}" ]; then 
+    USER_DATA=user-data
+else
+    USER_DATA="$1"
+    cp $USER_DATA user-data
+fi
+
 if [ -z "${POOL_NAME}" ]; then 
     POOL_NAME=default
 fi
@@ -25,20 +32,41 @@ if [ -z "${VCPUS}" ]; then
     VCPUS=1
 fi
 
-#wget http://cloud-images.ubuntu.com/trusty/current/trusty-server-cloudimg-amd64-disk1.img
+HOSTNAME=$( grep -iEo '\s*hostname.*$' "$USER_DATA" | grep -iEo '\s\w+$' | grep -iEo '\w+' | head -n 1 )
 
 cat <<EOF > meta-data
 instance-id: ${HOSTNAME}-${INSTANCE_ID}
+local-hostname: $HOSTNAME
 hostname: $HOSTNAME
 EOF
 
 genisoimage -output "${HOSTNAME}-config.iso" -volid cidata -joliet -rock user-data meta-data
 
-sudo cp "$BASE_IMG" "${POOL_PATH%%/}/${HOSTNAME}.img"
 sudo cp ${HOSTNAME}-config.iso "$POOL_PATH"
 virsh pool-refresh "$POOL_NAME"
 rm ${HOSTNAME}-config.iso
 rm meta-data
+
+BASE_SIZE=$( qemu-img info "$BASE_IMG" | grep -Eo '[0-9]+ bytes' | grep -Eo '[0-9]+' )
+
+virsh vol-create-as \
+    --pool $POOL_NAME \
+    --name ${HOSTNAME}.img \
+    --capacity $BASE_SIZE \
+    --format qcow2 \
+    --prealloc-metadata
+
+virsh vol-upload \
+    --vol ${HOSTNAME}.img \
+    --pool $POOL_NAME \
+    --file "$BASE_IMG"
+
+if [ -n "${SIZE}" ]; then
+    virsh vol-resize \
+        --vol ${HOSTNAME}.img \
+        --pool $POOL_NAME \
+        --capacity "$SIZE"
+fi
 
 echo Installing:
 echo "Hostname:  $HOSTNAME"

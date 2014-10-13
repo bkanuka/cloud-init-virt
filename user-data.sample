@@ -2,6 +2,9 @@
 # vim: syntax=yaml
 #
 
+hostname: sample
+fqdn: sample.example.com
+
 users:
   - default
   - name: bkanuka

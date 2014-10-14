@@ -20,4 +20,4 @@
   2. Edit `config` to set the Hostname and some other things.
   3. Edit `user-data` to your liking. Unfortunately I have not found any good guides for this. I've collected some things from http://cloudinit.readthedocs.org/en/latest/topics/examples.html
   4. Run `./install`
-  5. If finished, `./destroy` will completely remove the VM described in `config`
+  5. If finished, `./destroy [hostname]` will completely remove the VM including storage.

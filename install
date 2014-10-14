@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 CONFIG=config
+TEMPDIR=$(mktemp -d isoXXXX)
 
 if [ -f "$CONFIG" ]; then
     . "$CONFIG"
@@ -16,8 +17,8 @@ if [ -z "${1}" ]; then
     USER_DATA=user-data
 else
     USER_DATA="$1"
-    cp $USER_DATA user-data
 fi
+cp $USER_DATA $TEMPDIR
 
 if [ -z "${POOL_NAME}" ]; then 
     POOL_NAME=default
@@ -32,20 +33,25 @@ if [ -z "${VCPUS}" ]; then
     VCPUS=1
 fi
 
-HOSTNAME=$( grep -iEo '\s*hostname.*$' "$USER_DATA" | grep -iEo '\s\w+$' | grep -iEo '\w+' | head -n 1 )
+# Scrape hostname from user-data file
+# From RFC 952 http://tools.ietf.org/html/rfc1123
+HOSTNAME_REGEX='(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$'
+HOSTNAME=$( grep -i 'hostname' "$USER_DATA" | grep -iEo "$HOSTNAME_REGEX" | tail -1 )
 
-cat <<EOF > meta-data
+cat <<EOF > ${TEMPDIR}/meta-data
 instance-id: ${HOSTNAME}-${INSTANCE_ID}
 local-hostname: $HOSTNAME
 hostname: $HOSTNAME
 EOF
 
+cd $TEMPDIR
 genisoimage -output "${HOSTNAME}-config.iso" -volid cidata -joliet -rock user-data meta-data
+cd - > /dev/null
 
-sudo cp ${HOSTNAME}-config.iso "$POOL_PATH"
+sudo cp ${TEMPDIR}/${HOSTNAME}-config.iso "$POOL_PATH"
 virsh pool-refresh "$POOL_NAME"
-rm ${HOSTNAME}-config.iso
-rm meta-data
+#rm ${HOSTNAME}-config.iso
+#rm meta-data
 
 BASE_SIZE=$( qemu-img info "$BASE_IMG" | grep -Eo '[0-9]+ bytes' | grep -Eo '[0-9]+' )
 
@@ -75,7 +81,7 @@ echo "Pool Path: $POOL_PATH"
 
 virt-install \
     --name $HOSTNAME \
-    --ram $RAM \
+    --memory $RAM \
     --vcpus $VCPUS \
     --cpu host \
     --autostart \

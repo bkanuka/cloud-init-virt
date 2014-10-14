@@ -1,20 +1,27 @@
 #!/usr/bin/env bash
 
 ## Required:
-HOSTNAME=cloud-init-sample
 BASE_IMG=trusty-server-cloudimg-amd64-disk1.img
-
 
 ## Optional:
 
-# The libvirt storage pool to use
-# Default: default
-#POOL_NAME=default
-#POOL_NAME=vm_pool_0
+## RAM allocation:
+## Default: 1024M
+#RAM=1024
 
-# The full path of the storage pool
-# Default: $( virsh pool-dumpxml $POOL_NAME | xmllint --xpath '//target/path/text()' - | head -n 1 )
+## CPU allocation:
+## Default: 1
+#VCPUS=1
+
+## Disk size:
+## Default provided by base image
+#DISK=2G
+
+## The libvirt storage pool to use
+## Default: default
+#POOL_NAME=default
+
+## The full path of the storage pool
+## Default: Scraped from `virsh pool-dumpxml $POOL_NAME`
 #POOL_PATH=/mnt/vm_pool_0
 
-#RAM=1024
-#VCPUS=1

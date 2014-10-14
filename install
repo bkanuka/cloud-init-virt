@@ -48,10 +48,18 @@ cd $TEMPDIR
 genisoimage -output "${HOSTNAME}-config.iso" -volid cidata -joliet -rock user-data meta-data
 cd - > /dev/null
 
-sudo cp ${TEMPDIR}/${HOSTNAME}-config.iso "$POOL_PATH"
-virsh pool-refresh "$POOL_NAME"
-#rm ${HOSTNAME}-config.iso
-#rm meta-data
+virsh vol-create-as \
+    --pool $POOL_NAME \
+    --name "${HOSTNAME}-config.iso" \
+    --capacity 5242880 \
+    --format raw
+
+virsh vol-upload \
+    --vol ${HOSTNAME}-config.iso \
+    --pool $POOL_NAME \
+    --file "${TEMPDIR}/${HOSTNAME}-config.iso"
+
+rm -rf $TEMPDIR
 
 BASE_SIZE=$( qemu-img info "$BASE_IMG" | grep -Eo '[0-9]+ bytes' | grep -Eo '[0-9]+' )
 

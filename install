@@ -89,7 +89,7 @@ echo "Pool Path: $POOL_PATH"
 
 virt-install \
     --name $HOSTNAME \
-    --memory $RAM \
+    --ram $RAM \
     --vcpus $VCPUS \
     --cpu host \
     --autostart \

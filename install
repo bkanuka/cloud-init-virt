@@ -92,6 +92,7 @@ virt-install \
     --ram $RAM \
     --vcpus $VCPUS \
     --cpu host \
+    --graphics none \
     --autostart \
     --memballoon virtio \
     --network bridge=br0,model=virtio \

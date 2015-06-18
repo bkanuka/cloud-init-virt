@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+rsync -vzhhP rsync://cloud-images.ubuntu.com/cloud-images/utopic/current/utopic-server-cloudimg-amd64-disk1.img .
+
+rsync -vzhhP rsync://cloud-images.ubuntu.com/cloud-images/vivid/current/vivid-server-cloudimg-amd64-disk1.img .
+
+wait

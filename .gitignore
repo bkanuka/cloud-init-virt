@@ -2,3 +2,4 @@
 config
 user-data*
 !user-data.sample
+*.iso

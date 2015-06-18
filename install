@@ -18,7 +18,7 @@ if [ -z "${1}" ]; then
 else
     USER_DATA="$1"
 fi
-cp $USER_DATA $TEMPDIR
+cp "$USER_DATA" "$TEMPDIR"
 
 if [ -z "${POOL_NAME}" ]; then 
     POOL_NAME=default
@@ -26,11 +26,21 @@ fi
 if [ -z "${POOL_PATH}" ]; then
     POOL_PATH=$( virsh pool-dumpxml $POOL_NAME | xmllint --xpath '//target/path/text()' - | head -n 1 )
 fi
-if [ -z "${RAM}" ]; then 
+if [ -z "${RAM}" ]; then
     RAM=1024
 fi
-if [ -z "${VCPUS}" ]; then 
+if [ -z "${VCPUS}" ]; then
     VCPUS=1
+fi
+
+if [ -z "${GRAPHICS}" ]; then
+    GRAPHICS=false
+fi
+
+if [ ${GRAPHICS} = true ]; then
+    GRAPHICS="vnc,listen=0.0.0.0"
+else
+    GRAPHICS=none
 fi
 
 # Scrape hostname from user-data file
@@ -75,11 +85,11 @@ virsh vol-upload \
     --pool $POOL_NAME \
     --file "$BASE_IMG"
 
-if [ -n "${SIZE}" ]; then
+if [ -n "${DISK}" ]; then
     virsh vol-resize \
         --vol ${HOSTNAME}.img \
         --pool $POOL_NAME \
-        --capacity "$SIZE"
+        --capacity "$DISK"
 fi
 
 echo Installing:
@@ -92,7 +102,7 @@ virt-install \
     --ram $RAM \
     --vcpus $VCPUS \
     --cpu host \
-    --graphics none \
+    --graphics ${GRAPHICS} \
     --autostart \
     --memballoon virtio \
     --network bridge=br0,model=virtio \

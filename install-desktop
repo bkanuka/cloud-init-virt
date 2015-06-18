@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+CONFIG=config
+
+if [ -f "$CONFIG" ]; then
+    . "$CONFIG"
+else
+    echo "No config file found."
+    exit 1
+fi
+
+if [ -z "${POOL_NAME}" ]; then 
+    POOL_NAME=default
+fi
+
+if [ -z "${POOL_PATH}" ]; then
+    POOL_PATH=$( virsh pool-dumpxml $POOL_NAME | xmllint --xpath '//target/path/text()' - | head -n 1 )
+fi
+
+if [ -z "${DISK}" ]; then 
+    DISK=10G
+fi
+
+if [ -z "${RAM}" ]; then 
+    RAM=1024
+fi
+
+if [ -z "${VCPUS}" ]; then 
+    VCPUS=1
+fi
+
+if [ -z "${GRAPHICS}" ]; then 
+    GRAPHICS=none
+fi
+
+if [ ${GRAPHICS} = spice ]; then
+    GRAPHICS="spice,listen=0.0.0.0"
+elif [ ${GRAPHICS} = vnc ]; then
+    GRAPHICS="vnc,listen=0.0.0.0"
+fi
+
+virsh vol-create-as \
+    --pool $POOL_NAME \
+    --name ${HOSTNAME}.img \
+    --capacity $DISK \
+    --format qcow2 \
+    --prealloc-metadata
+
+echo Installing:
+echo "Hostname:  $HOSTNAME"
+echo "Pool Name: $POOL_NAME"
+echo "Pool Path: $POOL_PATH"
+
+virt-install \
+    --name $HOSTNAME \
+    --ram $RAM \
+    --vcpus $VCPUS \
+    --cpu host \
+    --graphics ${GRAPHICS} \
+    --memballoon virtio \
+    --network bridge=br0,model=virtio \
+    --disk vol=${POOL_NAME}/${HOSTNAME}.img,format=qcow2,bus=virtio,cache=writeback \
+    --os-type linux \
+    --os-variant ubuntutrusty \
+    --cdrom "$BASE_IMG" \
+    --channel spicevmc,target_type=virtio \
+    --console pty,target_type=serial
